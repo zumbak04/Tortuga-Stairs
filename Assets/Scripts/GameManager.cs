@@ -12,7 +12,6 @@ public class GameManager : MonoBehaviour
     public float inverseMoveTime;
     public int jumps;
 
-    private float playerHeight = -0.2f;
     private Vector3 stairsOffset;
 
     public Text scoreText;
@@ -27,11 +26,11 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         stairsList = new List<GameObject>();
-        stairsOffset = new Vector3(1.5f, -4.5f, -3.5f);
+        stairsOffset = new Vector3(1.5f, -4.3f, -3.5f);
         inverseMoveTime = 1f / moveTime;
 
         SpawnStairs(stairsOffset);
-        SpawnPlayer(new Vector3(0, playerHeight, 0));
+        SpawnPlayer(new Vector3(0, 0, 0));
     }
 
     private void SpawnStairs(Vector3 position)
@@ -53,7 +52,9 @@ public class GameManager : MonoBehaviour
         scoreText.text = $"—чет: {jumps}";
         if(jumps % 15 == 0)
         {
-            SpawnStairs(player.transform.position + stairsOffset);
+            Vector3 spawnPosition = player.transform.position + stairsOffset;
+            spawnPosition.x = stairsOffset.x;
+            SpawnStairs(spawnPosition);
             DestroyStairs(stairsList[0]);
         }
     }

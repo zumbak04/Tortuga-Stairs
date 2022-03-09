@@ -12,9 +12,20 @@ public class Player : MonoBehaviour
     }
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        int horizontal = (int)(Input.GetAxisRaw("Horizontal"));
+        int vertical = (int)(Input.GetAxisRaw("Vertical"));
+
+        if (vertical == 1)
         {
-            JumpBy(0, 1, 1);
+            VerticalJumpBy();
+        }
+        if (horizontal > 0 && transform.position.x < 1)
+        {
+            JumpBy(horizontal, 0, 0);
+        }
+        if (horizontal < 0 && transform.position.x > -1)
+        {
+            JumpBy(horizontal, 0, 0);
         }
     }
     private void JumpBy(float x, float y, float z)
@@ -22,9 +33,16 @@ public class Player : MonoBehaviour
         if (!isJumping)
         {
             isJumping = true;
-            GameManager.instance.IncreaseJumps();
             Vector3 target = new Vector3(transform.position.x + x, transform.position.y + y, transform.position.z + z);
             StartCoroutine(SmoothJump(target));
+        }
+    }
+    private void VerticalJumpBy()
+    {
+        if (!isJumping)
+        {
+            GameManager.instance.IncreaseJumps();
+            JumpBy(0, 1, 1);
         }
     }
     private IEnumerator SmoothJump(Vector3 target)
