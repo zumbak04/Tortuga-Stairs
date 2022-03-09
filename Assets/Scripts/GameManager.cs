@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class GameManager : MonoBehaviour
 
     private float playerHeight = -0.2f;
     private Vector3 stairsOffset;
+
+    public Text scoreText;
 
     private void Start()
     {
@@ -47,6 +50,7 @@ public class GameManager : MonoBehaviour
     public void IncreaseJumps()
     {
         jumps++;
+        scoreText.text = $"—чет: {jumps}";
         if(jumps % 15 == 0)
         {
             SpawnStairs(player.transform.position + stairsOffset);
