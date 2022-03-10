@@ -18,4 +18,5 @@ public class GameAssets : MonoBehaviour
 
     public GameObject stairs;
     public GameObject player;
+    public GameObject enemy;
 }

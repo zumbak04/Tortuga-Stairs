@@ -12,8 +12,11 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        Vector3 cameraPosition = GameManager.instance.player.transform.position;
-        cameraPosition.x = 0;
-        transform.position = cameraPosition + offset;
+        if (GameManager.instance.player != null)
+        {
+            Vector3 cameraPosition = GameManager.instance.player.transform.position;
+            cameraPosition.x = 0;
+            transform.position = cameraPosition + offset;
+        }
     }
 }
