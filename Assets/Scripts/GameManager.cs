@@ -2,23 +2,54 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    #region Public Fields
     public static GameManager instance = null;
-    private List<GameObject> stairsList;
     public GameObject player;
-    public int jumps;
-
-    private Vector3 stairsOffset;
-
     public Text scoreText;
+    public Button restartButton;
     [System.NonSerialized]
     public int jumpsBeyondScreen = 8;
     [SerializeField]
-    private float spawnDelay = 5f;
+    #endregion
 
-    private void Start()
+    #region Private Fields
+    private int playerJumps;
+    private List<GameObject> stairsList;
+    private Vector3 stairsOffset;
+    #endregion
+
+    #region Properties
+    public int PlayerJumps {
+        get => playerJumps;
+        set
+        {
+            playerJumps = value;
+            scoreText.text = $"—чет: {playerJumps}";
+        }
+    }
+    public float SpawnDelay
+    {
+        get
+        {
+            float spawnDelay = 5f - (float)PlayerJumps / 10;
+            if (player != null && player.TryGetComponent<Player>(out Player playerScript) && playerScript.IsJumping)
+            {
+                spawnDelay = Mathf.Max(spawnDelay, 0.5f);
+            }
+            else
+            {
+                spawnDelay = Mathf.Max(spawnDelay, 1f);
+            }
+            return spawnDelay;
+        }
+    }
+    #endregion
+
+    private void Awake()
     {
         if (instance == null)
             instance = this;
@@ -26,25 +57,11 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
 
         DontDestroyOnLoad(gameObject);
-
-        stairsList = new List<GameObject>();
-        stairsOffset = new Vector3(1.5f, -4.3f, -3.5f);
-
-        SpawnStairs(stairsOffset);
-        SpawnPlayer(new Vector3(0, 0, 0));
-        StartCoroutine(SpawnEnemy());
     }
-    private void Update()
+    private void Start()
     {
-        float newSpawnDelay = 5f - (float)jumps / 10;
-        if(player != null && player.TryGetComponent<Player>(out Player playerScript) && playerScript.IsJumping)
-        {
-            spawnDelay = Mathf.Max(newSpawnDelay, 0.5f);
-        }
-        else
-        {
-            spawnDelay = Mathf.Max(newSpawnDelay, 1f);
-        }
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        StartGame();
     }
 
     private void SpawnStairs(Vector3 position)
@@ -60,31 +77,49 @@ public class GameManager : MonoBehaviour
         stairsList.Remove(stairs);
         Destroy(stairs);
     }
-    public void IncreaseJumps()
+    public void MoveForward()
     {
-        jumps++;
-        scoreText.text = $"—чет: {jumps}";
-        if(jumps % jumpsBeyondScreen == 0)
+        PlayerJumps++;
+        if(PlayerJumps % jumpsBeyondScreen == 0)
         {
-            Vector3 spawnPosition = Vector3.one * jumps + stairsOffset;
+            Vector3 spawnPosition = Vector3.one * PlayerJumps + stairsOffset;
             spawnPosition.x = stairsOffset.x;
             SpawnStairs(spawnPosition);
             DestroyStairs(stairsList[0]);
         }
     }
-    public IEnumerator SpawnEnemy()
+    private IEnumerator SpawnEnemy()
     {
-        while (true)
+        while (player != null)
         {
-            Vector3 spawnPoint = Vector3.one * (jumps + jumpsBeyondScreen);
+            Vector3 spawnPoint = Vector3.one * (PlayerJumps + jumpsBeyondScreen);
             spawnPoint.x = Random.Range(-1, 2);
             Instantiate(GameAssets.instance.enemy, spawnPoint, Quaternion.identity);
-            yield return new WaitForSeconds(spawnDelay);
+            yield return new WaitForSeconds(SpawnDelay);
         }
     }
     public void GameOver()
     {
         Destroy(player);
-        player = null;
+        restartButton.gameObject.SetActive(true);
+    }
+    private void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
+    }
+    private void StartGame()
+    {
+        restartButton.gameObject.SetActive(false);
+        stairsList = new List<GameObject>();
+        stairsOffset = new Vector3(1.5f, -4.3f, -3.5f);
+        PlayerJumps = 0;
+
+        SpawnStairs(stairsOffset);
+        SpawnPlayer(new Vector3(0, 0, 0));
+        StartCoroutine(SpawnEnemy());
+    }
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        StartGame();
     }
 }

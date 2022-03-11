@@ -26,14 +26,14 @@ public class Player : JumpingObject
     {
         if (!isJumping)
         {
-            GameManager.instance.IncreaseJumps();
+            GameManager.instance.MoveForward();
             StartCoroutine(JumpBy(0, 1, 1));
         }
     }
     private void OnTriggerEnter(Collider other)
     {
         Debug.LogWarning("Коля детектед!");
-        if(other.tag == "Enemy")
+        if(other.CompareTag("Enemy"))
         {
             GameManager.instance.GameOver();
         }
