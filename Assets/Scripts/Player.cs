@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Player : JumpingObject
 {
+    public bool IsJumpingForward { get; protected set; }
+
     private void Update()
     {
         int horizontal = (int)(Input.GetAxisRaw("Horizontal"));
@@ -11,7 +13,7 @@ public class Player : JumpingObject
 
         if (vertical == 1)
         {
-            VerticalJumpBy();
+            StartCoroutine(JumpForward());
         }
         if (horizontal > 0 && transform.position.x < 1)
         {
@@ -22,12 +24,14 @@ public class Player : JumpingObject
             StartCoroutine(JumpBy(-1, 0, 0, 0.5f));
         }
     }
-    private void VerticalJumpBy()
+    private IEnumerator JumpForward()
     {
-        if (!isJumping)
+        if (!IsJumping)
         {
+            IsJumpingForward = true;
             GameManager.instance.MoveForward();
-            StartCoroutine(JumpBy(0, 1, 1, 1));
+            yield return StartCoroutine(JumpBy(0, 1, 1, 1));
+            IsJumpingForward = false;
         }
     }
     private void OnTriggerEnter(Collider other)

@@ -27,7 +27,7 @@ public class Enemy : JumpingObject
         while (maxJumps > jumps)
         {
             jumps++;
-            yield return StartCoroutine(JumpBy(0, -1, -1, 1));
+            yield return StartCoroutine(JumpBy(0, -1, -1, 1.5f));
         }
         Destroy(gameObject);
     }

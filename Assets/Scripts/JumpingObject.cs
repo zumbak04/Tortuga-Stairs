@@ -6,10 +6,9 @@ public class JumpingObject : MonoBehaviour
 {
     public float jumpTime;
 
-    protected bool isJumping = false;
     private float inverseJumpTime;
 
-    public bool IsJumping { get { return isJumping; } }
+    public bool IsJumping { get; protected set; }
 
     protected virtual void Start()
     {
@@ -17,9 +16,9 @@ public class JumpingObject : MonoBehaviour
     }
     protected IEnumerator JumpBy(float x, float y, float z, float heigh)
     {
-        if (!isJumping)
+        if (!IsJumping)
         {
-            isJumping = true;
+            IsJumping = true;
 
             Vector3 target = new Vector3(transform.position.x + x, transform.position.y + y, transform.position.z + z);
             Vector3 maxPoint = (target + transform.position) / 2 + Vector3.up * heigh;
@@ -37,7 +36,7 @@ public class JumpingObject : MonoBehaviour
                 yield return null;
             }
 
-            isJumping = false;
+            IsJumping = false;
         }
     }
 }
