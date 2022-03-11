@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -12,6 +13,9 @@ public class GameManager : MonoBehaviour
     public Text scoreText;
     public Button restartButton;
     public Button startButton;
+    public InputField nameField;
+    public Dictionary<string, int> leaderboard;
+    public Text leaderboardText;
     [System.NonSerialized]
     public int jumpsBeyondScreen = 8;
     [SerializeField]
@@ -62,6 +66,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        leaderboard = new Dictionary<string, int>();
         InitGame();
     }
 
@@ -90,6 +95,9 @@ public class GameManager : MonoBehaviour
     }
     private void InitGame()
     {
+        nameField.gameObject.SetActive(false);
+        leaderboardText.gameObject.SetActive(false);
+
         stairsList = new List<GameObject>();
         stairsOffset = new Vector3(1.5f, -4.3f, -3.5f);
         PlayerJumps = 0;
@@ -99,6 +107,22 @@ public class GameManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         StartGame();
+    }
+    private void ShowLeaderboard()
+    {
+        leaderboardText.gameObject.SetActive(true);
+        UpdateLeaderboard();
+    }
+    private void UpdateLeaderboard()
+    {
+        leaderboardText.text = "Лидеры:\n";
+        List<KeyValuePair<string, int>> leaderboardList = leaderboard.ToList();
+        leaderboardList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
+        for (int i = 0; i < 3 && i < leaderboardList.Count; i++)
+        {
+            var leader = leaderboardList[i];
+            leaderboardText.text += $"{leader.Key}: {leader.Value}\n";
+        }
     }
     #endregion
 
@@ -119,6 +143,8 @@ public class GameManager : MonoBehaviour
         Destroy(player);
         StopCoroutine("SpawnEnemy");
         restartButton.gameObject.SetActive(true);
+        nameField.gameObject.SetActive(true);
+        ShowLeaderboard();
     }
     public void StartGame()
     {
@@ -133,6 +159,12 @@ public class GameManager : MonoBehaviour
     public void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
+    }
+    public void EnterName()
+    {
+        leaderboard.Add(nameField.text, PlayerJumps);
+        UpdateLeaderboard();
+        nameField.gameObject.SetActive(false);
     }
     #endregion
 }
