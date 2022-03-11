@@ -36,14 +36,14 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            float spawnDelay = 5f - (float)PlayerJumps / 10;
+            float spawnDelay = 1f - (float)PlayerJumps / 40;
             if (player != null && player.TryGetComponent<Player>(out Player playerScript) && playerScript.IsJumping)
             {
-                spawnDelay = Mathf.Max(spawnDelay, 0.5f);
+                spawnDelay = Mathf.Max(spawnDelay, 0.25f);
             }
             else
             {
-                spawnDelay = Mathf.Max(spawnDelay, 1f);
+                spawnDelay = Mathf.Max(spawnDelay, 0.75f);
             }
             return spawnDelay;
         }

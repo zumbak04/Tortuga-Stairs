@@ -15,11 +15,11 @@ public class Player : JumpingObject
         }
         if (horizontal > 0 && transform.position.x < 1)
         {
-            StartCoroutine(JumpBy(1, 0, 0));
+            StartCoroutine(JumpBy(1, 0, 0, 0.5f));
         }
         if (horizontal < 0 && transform.position.x > -1)
         {
-            StartCoroutine(JumpBy(-1, 0, 0));
+            StartCoroutine(JumpBy(-1, 0, 0, 0.5f));
         }
     }
     private void VerticalJumpBy()
@@ -27,7 +27,7 @@ public class Player : JumpingObject
         if (!isJumping)
         {
             GameManager.instance.MoveForward();
-            StartCoroutine(JumpBy(0, 1, 1));
+            StartCoroutine(JumpBy(0, 1, 1, 1));
         }
     }
     private void OnTriggerEnter(Collider other)

@@ -15,14 +15,14 @@ public class JumpingObject : MonoBehaviour
     {
         inverseJumpTime = 1f / jumpTime;
     }
-    protected IEnumerator JumpBy(float x, float y, float z)
+    protected IEnumerator JumpBy(float x, float y, float z, float heigh)
     {
         if (!isJumping)
         {
             isJumping = true;
 
             Vector3 target = new Vector3(transform.position.x + x, transform.position.y + y, transform.position.z + z);
-            Vector3 maxPoint = (target + transform.position) / 2 + Vector3.up;
+            Vector3 maxPoint = (target + transform.position) / 2 + Vector3.up * heigh;
 
             while ((transform.position - maxPoint).sqrMagnitude > float.Epsilon)
             {
