@@ -8,16 +8,17 @@ public class CameraController : MonoBehaviour
     void Start()
     {
         offset = new Vector3(2.4f, 7.3f, -0.6f);
+        transform.position = offset;
     }
 
     void Update()
     {
-        Vector3 cameraPosition = Vector3.zero;
         if (GameManager.instance.player != null)
         {
+            Vector3 cameraPosition = Vector3.zero;
             cameraPosition = GameManager.instance.player.transform.position;
             cameraPosition.x = 0;
+            transform.position = cameraPosition + offset;
         }
-        transform.position = cameraPosition + offset;
     }
 }
