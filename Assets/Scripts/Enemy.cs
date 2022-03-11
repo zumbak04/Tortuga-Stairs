@@ -16,6 +16,11 @@ public class Enemy : JumpingObject
 
         StartCoroutine(JumpDown());
     }
+    private void Update()
+    {
+        //Rotate to make them more interesting
+        transform.Rotate(Vector3.right * -jumpTime * 2);
+    }
 
     private IEnumerator JumpDown()
     {
