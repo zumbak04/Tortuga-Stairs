@@ -6,7 +6,7 @@ public class JumpingObject : MonoBehaviour
 {
     public float jumpTime;
 
-    private float inverseJumpTime;
+    protected float inverseJumpTime;
 
     public bool IsJumping { get; protected set; }
 
@@ -16,7 +16,7 @@ public class JumpingObject : MonoBehaviour
     }
     protected IEnumerator JumpBy(float x, float y, float z, float heigh)
     {
-        if (!IsJumping)
+        if (!IsJumping && (transform.position.x + x <= 1) && (transform.position.x + x >= -1))
         {
             IsJumping = true;
 
@@ -26,12 +26,14 @@ public class JumpingObject : MonoBehaviour
             while ((transform.position - maxPoint).sqrMagnitude > float.Epsilon)
             {
                 Vector3 newPosition = Vector3.MoveTowards(transform.position, maxPoint, inverseJumpTime * Time.deltaTime);
+                transform.Rotate(new Vector3(z, 0, 0) * inverseJumpTime * Time.deltaTime * 45);
                 transform.position = newPosition;
                 yield return null;
             }
             while ((transform.position - target).sqrMagnitude > float.Epsilon)
             {
                 Vector3 newPosition = Vector3.MoveTowards(transform.position, target, inverseJumpTime * Time.deltaTime);
+                transform.Rotate(new Vector3(z, 0, 0) * inverseJumpTime * Time.deltaTime * 45);
                 transform.position = newPosition;
                 yield return null;
             }
