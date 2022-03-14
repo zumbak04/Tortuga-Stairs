@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
         get
         {
             float noSpawnRadius = Mathf.Max(startNoSpawnRadius - startNoSpawnRadius * (float)PlayerJumps / 40, 0);
-            noSpawnRadius = Mathf.Max(noSpawnRadius, 1f);
+            noSpawnRadius = Mathf.Max(noSpawnRadius, 1.2f);
             return noSpawnRadius;
         }
     }
