@@ -166,7 +166,6 @@ public class GameManager : MonoBehaviour
                 {
                     if (!(leader is Dictionary<string, object>)) continue;
                     int childScore = Convert.ToInt32(((Dictionary<string, object>)leader)["score"]);
-                    Debug.Log(childScore);
                     if (childScore < minScore)
                     {
                         minScore = childScore;
