@@ -104,7 +104,6 @@ public class GameManager : MonoBehaviour
         {
             Vector3 spawnPoint = Vector3.one * (PlayerJumps + jumpsBeyondScreen);
             spawnPoint.x = UnityEngine.Random.Range(-1, 2);
-            Debug.LogWarning(NoSpawnRadius);
             if (!Physics.CheckSphere(spawnPoint, NoSpawnRadius))
             {
                 Instantiate(GameAssets.instance.enemy, spawnPoint, Quaternion.identity);
