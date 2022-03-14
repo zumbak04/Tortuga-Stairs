@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
         get
         {
             float noSpawnRadius = Mathf.Max(startNoSpawnRadius - startNoSpawnRadius * (float)PlayerJumps / 40, 0);
-            noSpawnRadius = Mathf.Max(noSpawnRadius, 1.2f);
+            noSpawnRadius = Mathf.Max(noSpawnRadius, 1.1f);
             return noSpawnRadius;
         }
     }
@@ -141,48 +141,51 @@ public class GameManager : MonoBehaviour
         DataSnapshot snapshot = args.Snapshot;
         if (snapshot.ChildrenCount > 0)
         {
-
-            var sortedLeaders = snapshot.Children.OrderByDescending(key => key.Value);
+            var sortedLeaders = snapshot.Children.OrderByDescending(key => key.Child("score").Value);
             foreach (DataSnapshot leader in sortedLeaders)
             {
-                leaderboardText.text += $"{leader.Key}: {leader.Value}\n";
+                leaderboardText.text += $"{leader.Child("nickname").Value}: {leader.Child("score").Value}\n";
             }
         }
     }
-    private void AddScoreToLeaders(string nickname, int score, DatabaseReference leaderBoardRef)
+    private void AddScoreToLeaders(string nickname, int score, DatabaseReference databaseRef)
     {
-        leaderBoardRef.RunTransaction( mutableData =>
+        databaseRef.RunTransaction(mutableData =>
         {
-            Dictionary<string, object> leaders = mutableData.Value as Dictionary<string, object>;
-    
+            List<object> leaders = mutableData.Value as List<object>;
+
             if (leaders is null)
             {
-                leaders = new Dictionary<string, object>();
+                leaders = new List<object>();
             }
             else if (mutableData.ChildrenCount >= maxScores)
             {
                 int minScore = int.MaxValue;
-                string minLeader = null;
+                object minLeader = null;
                 foreach (var leader in leaders)
                 {
-                    int leaderScore = Convert.ToInt32(leader.Value);
-                    if (leaderScore < minScore)
+                    if (!(leader is Dictionary<string, object>)) continue;
+                    int childScore = Convert.ToInt32(((Dictionary<string, object>)leader)["score"]);
+                    Debug.Log(childScore);
+                    if (childScore < minScore)
                     {
-                        minScore = leaderScore;
-                        minLeader = leader.Key;
+                        minScore = childScore;
+                        minLeader = leader;
                     }
                 }
                 if (minScore > score)
                 {
                     return TransactionResult.Abort();
                 }
-                else if(!(minLeader is null))
-                {
-                    leaders.Remove(minLeader);
-                }
+
+                leaders.Remove(minLeader);
             }
 
-            leaders.Add(nickname, score);
+            Dictionary<string, object> newLeader = new Dictionary<string, object>();
+            newLeader["score"] = score;
+            newLeader["nickname"] = nickname;
+            leaders.Add(newLeader);
+
             mutableData.Value = leaders;
             return TransactionResult.Success(mutableData);
         });
