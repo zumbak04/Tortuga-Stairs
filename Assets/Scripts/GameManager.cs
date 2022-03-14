@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using Firebase;
+using Firebase.Database;
+using static Firebase.Extensions.TaskExtension;
+using System;
 using System.Linq;
 
 public class GameManager : MonoBehaviour
@@ -14,7 +18,6 @@ public class GameManager : MonoBehaviour
     public Button restartButton;
     public Button startButton;
     public InputField nameField;
-    public Dictionary<string, int> leaderboard;
     public Text leaderboardText;
     [System.NonSerialized]
     public int jumpsBeyondScreen = 8;
@@ -25,6 +28,7 @@ public class GameManager : MonoBehaviour
     private int playerJumps;
     private List<GameObject> stairsList;
     private Vector3 stairsOffset;
+    private DatabaseReference leaderboard;
     #endregion
 
     #region Properties
@@ -41,13 +45,8 @@ public class GameManager : MonoBehaviour
         get
         {
             float spawnDelay = Mathf.Max(1f - (float)PlayerJumps / 40, 0);
-            spawnDelay = Mathf.Max(spawnDelay, 0.3f);
+            spawnDelay = Mathf.Max(spawnDelay, 0.6f);
 
-            // Give you more time if you stay still
-            if (player != null && player.TryGetComponent<Player>(out Player playerScript) && !playerScript.IsJumpingForward)
-            {
-                spawnDelay *= 3;
-            }
             return spawnDelay;
         }
     }
@@ -65,8 +64,21 @@ public class GameManager : MonoBehaviour
     }
     private void Start()
     {
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.Exception is null)
+            {
+                leaderboard = FirebaseDatabase.DefaultInstance.GetReference("Leaders");
+            }
+            else
+            {
+                Debug.LogError("Firebase не инициализирована");
+            }
+        });
+
         SceneManager.sceneLoaded += OnSceneLoaded;
-        leaderboard = new Dictionary<string, int>();
+        stairsOffset = new Vector3(1.5f, -4.3f, -3.5f);
+        stairsList = new List<GameObject>();
         InitGame();
     }
 
@@ -88,8 +100,11 @@ public class GameManager : MonoBehaviour
         while (player != null)
         {
             Vector3 spawnPoint = Vector3.one * (PlayerJumps + jumpsBeyondScreen);
-            spawnPoint.x = Random.Range(-1, 2);
-            Instantiate(GameAssets.instance.enemy, spawnPoint, Quaternion.identity);
+            spawnPoint.x = UnityEngine.Random.Range(-1, 2);
+            if (!Physics.CheckSphere(spawnPoint, 0.8f))
+            {
+                Instantiate(GameAssets.instance.enemy, spawnPoint, Quaternion.identity);
+            }
             yield return new WaitForSeconds(SpawnDelay);
         }
     }
@@ -98,8 +113,7 @@ public class GameManager : MonoBehaviour
         nameField.gameObject.SetActive(false);
         leaderboardText.gameObject.SetActive(false);
 
-        stairsList = new List<GameObject>();
-        stairsOffset = new Vector3(1.5f, -4.3f, -3.5f);
+        stairsList.Clear();
         PlayerJumps = 0;
 
         SpawnStairs(stairsOffset);
@@ -115,13 +129,24 @@ public class GameManager : MonoBehaviour
     }
     private void UpdateLeaderboard()
     {
-        leaderboardText.text = "Лидеры:\n";
-        List<KeyValuePair<string, int>> leaderboardList = leaderboard.ToList();
-        leaderboardList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
-        for (int i = 0; i < 3 && i < leaderboardList.Count; i++)
+        if(!(leaderboard is null))
         {
-            var leader = leaderboardList[i];
-            leaderboardText.text += $"{leader.Key}: {leader.Value}\n";
+            leaderboardText.text = "Лидеры:\n";
+            leaderboard.OrderByValue().LimitToLast(3).GetValueAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    DataSnapshot snapshot = task.Result;
+                    if (snapshot.ChildrenCount > 0)
+                    {
+                        var reversedLeaders = snapshot.Children.Reverse();
+                        foreach (DataSnapshot leader in reversedLeaders)
+                        {
+                            leaderboardText.text += $"{leader.Key}: {leader.Value}\n";
+                        }
+                    }
+                }
+            });
         }
     }
     #endregion
@@ -143,8 +168,11 @@ public class GameManager : MonoBehaviour
         Destroy(player);
         StopCoroutine("SpawnEnemy");
         restartButton.gameObject.SetActive(true);
-        nameField.gameObject.SetActive(true);
-        ShowLeaderboard();
+        if(!(leaderboard is null))
+        {
+            nameField.gameObject.SetActive(true);
+            ShowLeaderboard();
+        }
     }
     public void StartGame()
     {
@@ -162,8 +190,29 @@ public class GameManager : MonoBehaviour
     }
     public void EnterName()
     {
-        leaderboard.Add(nameField.text, PlayerJumps);
-        UpdateLeaderboard();
+        if(!(leaderboard is null))
+        {
+            leaderboard.Child(nameField.text).GetValueAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.IsCompleted)
+                {
+                    DataSnapshot snapshot = task.Result;
+                    if (Convert.ToInt32(snapshot.Value) < PlayerJumps)
+                    {
+                        //Какого хуя?
+                        leaderboard.Child(nameField.text).SetValueAsync(PlayerJumps);
+                    }
+                }
+                else
+                {
+                    //Какого хуя?
+                    leaderboard.Child(nameField.text).SetValueAsync(PlayerJumps);
+                }
+            });
+
+            UpdateLeaderboard();
+        }
+
         nameField.gameObject.SetActive(false);
     }
     #endregion
