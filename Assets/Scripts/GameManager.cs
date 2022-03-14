@@ -29,6 +29,9 @@ public class GameManager : MonoBehaviour
     private List<GameObject> stairsList;
     private Vector3 stairsOffset;
     private DatabaseReference leaderboard;
+    private readonly int maxScores = 3;
+    private readonly float spawnDelay = 0.2f;
+    private readonly float startNoSpawnRadius = 4f;
     #endregion
 
     #region Properties
@@ -40,14 +43,13 @@ public class GameManager : MonoBehaviour
             scoreText.text = $"—чет: {playerJumps}";
         }
     }
-    public float SpawnDelay
+    private float NoSpawnRadius
     {
         get
         {
-            float spawnDelay = Mathf.Max(1f - (float)PlayerJumps / 40, 0);
-            spawnDelay = Mathf.Max(spawnDelay, 0.6f);
-
-            return spawnDelay;
+            float noSpawnRadius = Mathf.Max(startNoSpawnRadius - startNoSpawnRadius * (float)PlayerJumps / 40, 0);
+            noSpawnRadius = Mathf.Max(noSpawnRadius, 1f);
+            return noSpawnRadius;
         }
     }
     #endregion
@@ -102,11 +104,12 @@ public class GameManager : MonoBehaviour
         {
             Vector3 spawnPoint = Vector3.one * (PlayerJumps + jumpsBeyondScreen);
             spawnPoint.x = UnityEngine.Random.Range(-1, 2);
-            if (!Physics.CheckSphere(spawnPoint, 0.8f))
+            Debug.LogWarning(NoSpawnRadius);
+            if (!Physics.CheckSphere(spawnPoint, NoSpawnRadius))
             {
                 Instantiate(GameAssets.instance.enemy, spawnPoint, Quaternion.identity);
             }
-            yield return new WaitForSeconds(SpawnDelay);
+            yield return new WaitForSeconds(spawnDelay);
         }
     }
     private void InitGame()
