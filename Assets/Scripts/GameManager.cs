@@ -69,6 +69,7 @@ public class GameManager : MonoBehaviour
             if (task.Exception is null)
             {
                 leaderboard = FirebaseDatabase.DefaultInstance.GetReference("Leaders");
+                leaderboard.ValueChanged += UpdateLeaderboard;
             }
             else
             {
@@ -125,29 +126,64 @@ public class GameManager : MonoBehaviour
     private void ShowLeaderboard()
     {
         leaderboardText.gameObject.SetActive(true);
-        UpdateLeaderboard();
     }
-    private void UpdateLeaderboard()
+    private void UpdateLeaderboard(object sender, ValueChangedEventArgs args)
     {
-        if(!(leaderboard is null))
+        if (args.DatabaseError != null)
         {
-            leaderboardText.text = "Лидеры:\n";
-            leaderboard.OrderByValue().LimitToLast(3).GetValueAsync().ContinueWithOnMainThread(task =>
+            Debug.LogError(args.DatabaseError.Message);
+            return;
+        }
+
+		leaderboardText.text = "Лидеры:\n";
+        DataSnapshot snapshot = args.Snapshot;
+        if (snapshot.ChildrenCount > 0)
+        {
+
+            var sortedLeaders = snapshot.Children.OrderByDescending(key => key.Value);
+            foreach (DataSnapshot leader in sortedLeaders)
             {
-                if (task.IsCompleted)
+                leaderboardText.text += $"{leader.Key}: {leader.Value}\n";
+            }
+        }
+    }
+    private void AddScoreToLeaders(string nickname, int score, DatabaseReference leaderBoardRef)
+    {
+        leaderBoardRef.RunTransaction( mutableData =>
+        {
+            Dictionary<string, object> leaders = mutableData.Value as Dictionary<string, object>;
+    
+            if (leaders is null)
+            {
+                leaders = new Dictionary<string, object>();
+            }
+            else if (mutableData.ChildrenCount >= maxScores)
+            {
+                int minScore = int.MaxValue;
+                string minLeader = null;
+                foreach (var leader in leaders)
                 {
-                    DataSnapshot snapshot = task.Result;
-                    if (snapshot.ChildrenCount > 0)
+                    int leaderScore = Convert.ToInt32(leader.Value);
+                    if (leaderScore < minScore)
                     {
-                        var reversedLeaders = snapshot.Children.Reverse();
-                        foreach (DataSnapshot leader in reversedLeaders)
-                        {
-                            leaderboardText.text += $"{leader.Key}: {leader.Value}\n";
-                        }
+                        minScore = leaderScore;
+                        minLeader = leader.Key;
                     }
                 }
-            });
-        }
+                if (minScore > score)
+                {
+                    return TransactionResult.Abort();
+                }
+                else if(!(minLeader is null))
+                {
+                    leaders.Remove(minLeader);
+                }
+            }
+
+            leaders.Add(nickname, score);
+            mutableData.Value = leaders;
+            return TransactionResult.Success(mutableData);
+        });
     }
     #endregion
 
@@ -190,30 +226,15 @@ public class GameManager : MonoBehaviour
     }
     public void EnterName()
     {
-        if(!(leaderboard is null))
+        if (nameField.text != "")
         {
-            leaderboard.Child(nameField.text).GetValueAsync().ContinueWithOnMainThread(task =>
+            if (!(leaderboard is null))
             {
-                if (task.IsCompleted)
-                {
-                    DataSnapshot snapshot = task.Result;
-                    if (Convert.ToInt32(snapshot.Value) < PlayerJumps)
-                    {
-                        //Какого хуя?
-                        leaderboard.Child(nameField.text).SetValueAsync(PlayerJumps);
-                    }
-                }
-                else
-                {
-                    //Какого хуя?
-                    leaderboard.Child(nameField.text).SetValueAsync(PlayerJumps);
-                }
-            });
+                AddScoreToLeaders(nameField.text, PlayerJumps, leaderboard);
+            }
 
-            UpdateLeaderboard();
+            nameField.gameObject.SetActive(false);
         }
-
-        nameField.gameObject.SetActive(false);
     }
     #endregion
 }

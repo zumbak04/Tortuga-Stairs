@@ -67,7 +67,6 @@ public class Player : JumpingObject
     }
     private void OnTriggerEnter(Collider other)
     {
-        Debug.LogWarning("Коля детектед!");
         if(other.CompareTag("Enemy"))
         {
             GameManager.instance.GameOver();
